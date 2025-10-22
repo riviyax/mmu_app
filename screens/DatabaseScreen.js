@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   Alert,
   Modal,
   Pressable,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
+import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 
 const API_URL = 'https://marks.vercel.app/api/members';
 
@@ -32,6 +34,12 @@ export default function DatabaseScreen({ navigation }) {
   const [userModalVisible, setUserModalVisible] = useState(false);
 
   const [searchText, setSearchText] = useState('');
+
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [infoText, setInfoText] = useState('');
+
+  const richText = useRef();
 
   // Fetch members
   const fetchMembers = async () => {
@@ -78,6 +86,7 @@ export default function DatabaseScreen({ navigation }) {
       name: newName,
       rank: newRank,
       marks: newMarks,
+      info: '',
     };
 
     try {
@@ -147,7 +156,14 @@ export default function DatabaseScreen({ navigation }) {
 
   // Render member card
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => {
+        setSelectedMember(item);
+        setInfoText(item.info || '');
+        setInfoModalVisible(true);
+      }}
+    >
       <Text style={styles.label}>Name:</Text>
       {editingMemberID === item._id && editingField === 'name' ? (
         <TextInput
@@ -215,7 +231,7 @@ export default function DatabaseScreen({ navigation }) {
       <TouchableOpacity onPress={() => deleteMember(item._id)} style={styles.iconBtn}>
         <FontAwesome name="trash" size={20} color="#ff4d4d" />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -278,6 +294,67 @@ export default function DatabaseScreen({ navigation }) {
         </View>
       </Modal>
 
+      {/* Info Editor Modal */}
+      <Modal visible={infoModalVisible} transparent animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { height: '80%' }]}>
+            <Text style={styles.modalTitle}>Info (How marks were earned)</Text>
+
+            <ScrollView>
+              <RichEditor
+                ref={richText}
+                initialContentHTML={infoText}
+                onChange={setInfoText}
+                style={styles.richEditor}
+                placeholder="Type details here..."
+              />
+            </ScrollView>
+
+            <RichToolbar
+              editor={richText}
+              actions={[
+                actions.setBold,
+                actions.setItalic,
+                actions.setUnderline,
+                actions.insertBulletsList,
+                actions.insertOrderedList,
+                actions.insertLink,
+                actions.undo,
+                actions.redo,
+              ]}
+              style={styles.richToolbar}
+            />
+
+            <View style={styles.modalButtons}>
+              <Pressable
+                style={[styles.modalBtn, { backgroundColor: '#000' }]}
+                onPress={async () => {
+                  try {
+                    await axios.put(`${API_URL}/${selectedMember._id}`, {
+                      ...selectedMember,
+                      info: infoText,
+                    });
+                    setInfoModalVisible(false);
+                    fetchMembers();
+                  } catch (error) {
+                    Alert.alert('Error', 'Failed to update info');
+                  }
+                }}
+              >
+                <Text style={styles.addText}>Save</Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
+                onPress={() => setInfoModalVisible(false)}
+              >
+                <Text style={[styles.addText, { color: '#000' }]}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* Username Modal */}
       <Modal visible={userModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
@@ -315,7 +392,7 @@ const styles = StyleSheet.create({
   iconBtn: { marginTop: 6 },
   addButton: { backgroundColor: '#000', paddingVertical: 14, paddingHorizontal: 22, borderRadius: 50, alignSelf: 'center', marginBottom: 20 },
   addText: { color: '#fff', fontFamily: 'Poppins_700Bold', textAlign: 'center' },
-  logoutBtn: { backgroundColor: '#ff4d4d', paddingVertical: 12, borderRadius: 8, marginTop: 20, width: 100, alignSelf: 'center' },
+  logoutBtn: { backgroundColor: '#ff4d4d', paddingVertical: 12, borderRadius: 8, marginTop: 20, width: 100, alignSelf: 'center', marginBottom: 30 },
   input: { borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, marginBottom: 10 },
   inputLabel: { fontWeight: 'bold', marginBottom: 5 },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
@@ -323,4 +400,6 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 20, fontFamily: 'Poppins_700Bold', marginBottom: 10, textAlign: 'center' },
   modalButtons: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 },
   modalBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
+  richEditor: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, minHeight: 200 },
+  richToolbar: { backgroundColor: '#f2f2f2', borderRadius: 8, marginVertical: 10 },
 });
