@@ -14,6 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { FontAwesome } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 
 const API_URL = 'https://marks.vercel.app/api/members';
@@ -34,6 +35,7 @@ export default function DatabaseScreen({ navigation }) {
   const [userModalVisible, setUserModalVisible] = useState(false);
 
   const [searchText, setSearchText] = useState('');
+  const [sortOption, setSortOption] = useState('none'); // ✅ sort state
 
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
@@ -146,7 +148,7 @@ export default function DatabaseScreen({ navigation }) {
     }
   };
 
-  // Filter members based on search
+  // Filter members
   const filteredMembers = members.filter(
     (m) =>
       m.name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -154,7 +156,16 @@ export default function DatabaseScreen({ navigation }) {
       m.marks.toString().includes(searchText)
   );
 
-  // Render member card
+  // ✅ Sort members
+  const sortedMembers = [...filteredMembers].sort((a, b) => {
+    if (sortOption === 'high') return b.marks - a.marks;
+    if (sortOption === 'low') return a.marks - b.marks;
+    if (sortOption === 'az') return a.name.localeCompare(b.name);
+    if (sortOption === 'za') return b.name.localeCompare(a.name);
+    return 0;
+  });
+
+  // Render member
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.card}
@@ -236,7 +247,7 @@ export default function DatabaseScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {/* Username Header */}
+      {/* Header */}
       <View style={styles.headerRow}>
         <Text style={styles.title}>Hey, {userName}</Text>
         <TouchableOpacity onPress={() => setUserModalVisible(true)}>
@@ -244,7 +255,7 @@ export default function DatabaseScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar */}
+      {/* Search */}
       <TextInput
         placeholder="Search by Name, Rank, Marks..."
         style={styles.searchInput}
@@ -252,14 +263,30 @@ export default function DatabaseScreen({ navigation }) {
         onChangeText={setSearchText}
       />
 
-      {/* Add Member Button */}
+      {/* ✅ Sort Dropdown */}
+      <View style={styles.sortContainer}>
+        <Text style={styles.sortLabel}>Sort by:</Text>
+        <Picker
+          selectedValue={sortOption}
+          style={styles.sortPicker}
+          onValueChange={(value) => setSortOption(value)}
+        >
+          <Picker.Item label="None" value="none" />
+          <Picker.Item label="Highest Marks" value="high" />
+          <Picker.Item label="Lowest Marks" value="low" />
+          <Picker.Item label="Name A–Z" value="az" />
+          <Picker.Item label="Name Z–A" value="za" />
+        </Picker>
+      </View>
+
+      {/* Add Button */}
       <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)}>
         <Text style={styles.addText}>+ Add Member</Text>
       </TouchableOpacity>
 
       {/* Members List */}
       <FlatList
-        data={filteredMembers}
+        data={sortedMembers}
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -272,16 +299,12 @@ export default function DatabaseScreen({ navigation }) {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Add New Member</Text>
-
             <Text style={styles.inputLabel}>Name</Text>
             <TextInput placeholder="Name" value={newName} onChangeText={setNewName} style={styles.input} />
-
             <Text style={styles.inputLabel}>Rank</Text>
             <TextInput placeholder="Rank" value={newRank} onChangeText={setNewRank} style={styles.input} />
-
             <Text style={styles.inputLabel}>Marks</Text>
             <TextInput placeholder="Marks" value={newMarks} keyboardType="numeric" onChangeText={setNewMarks} style={styles.input} />
-
             <View style={styles.modalButtons}>
               <Pressable style={[styles.modalBtn, { backgroundColor: '#000' }]} onPress={addMember}>
                 <Text style={styles.addText}>Add</Text>
@@ -294,12 +317,11 @@ export default function DatabaseScreen({ navigation }) {
         </View>
       </Modal>
 
-      {/* Info Editor Modal */}
+      {/* Info Modal */}
       <Modal visible={infoModalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { height: '80%' }]}>
             <Text style={styles.modalTitle}>Info (How marks were earned)</Text>
-
             <ScrollView>
               <RichEditor
                 ref={richText}
@@ -309,7 +331,6 @@ export default function DatabaseScreen({ navigation }) {
                 placeholder="Type details here..."
               />
             </ScrollView>
-
             <RichToolbar
               editor={richText}
               actions={[
@@ -324,7 +345,6 @@ export default function DatabaseScreen({ navigation }) {
               ]}
               style={styles.richToolbar}
             />
-
             <View style={styles.modalButtons}>
               <Pressable
                 style={[styles.modalBtn, { backgroundColor: '#000' }]}
@@ -343,11 +363,7 @@ export default function DatabaseScreen({ navigation }) {
               >
                 <Text style={styles.addText}>Save</Text>
               </Pressable>
-
-              <Pressable
-                style={[styles.modalBtn, { backgroundColor: '#ccc' }]}
-                onPress={() => setInfoModalVisible(false)}
-              >
+              <Pressable style={[styles.modalBtn, { backgroundColor: '#ccc' }]} onPress={() => setInfoModalVisible(false)}>
                 <Text style={[styles.addText, { color: '#000' }]}>Cancel</Text>
               </Pressable>
             </View>
@@ -385,6 +401,9 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   title: { fontSize: 24, fontFamily: 'Poppins_700Bold' },
   searchInput: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 8, marginBottom: 10 },
+  sortContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  sortLabel: { fontWeight: 'bold', marginRight: 10 },
+  sortPicker: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8 },
   card: { backgroundColor: '#f9f9f9', padding: 16, borderRadius: 10, marginBottom: 12, elevation: 2 },
   label: { fontWeight: 'bold', marginTop: 4 },
   value: { fontSize: 16, marginBottom: 6 },
