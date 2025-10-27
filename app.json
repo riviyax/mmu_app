@@ -2,7 +2,7 @@
   "expo": {
     "name": "MMU Marks",
     "slug": "mmu_marks",
-    "version": "1.20.1",
+    "version": "1.30.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "userInterfaceStyle": "light",
@@ -21,7 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.ggriviya.mmu_marks"
+      "package": "com.riviyax.mmu_marks"
     },
     "web": {
       "favicon": "./assets/logo.png"
@@ -33,6 +33,14 @@
     },
     "plugins": [
       "expo-font"
-    ]
+    ],
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/ca616fd2-16ea-423b-85ec-0f530ba133d7",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    }
   }
 }

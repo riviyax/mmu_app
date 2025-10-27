@@ -31,7 +31,7 @@ export default function DatabaseScreen({ navigation }) {
   const [newRank, setNewRank] = useState('');
   const [newMarks, setNewMarks] = useState('');
 
-  const [userName, setUserName] = useState('Developer');
+  const [userName, setUserName] = useState('User');
   const [userModalVisible, setUserModalVisible] = useState(false);
 
   const [searchText, setSearchText] = useState('');

@@ -13,24 +13,8 @@ export default function WelcomeScreen({ navigation }) {
   //   checkFirstLaunch();
   // }, []);
 
-  useEffect(() => {
-    const checkLaunch = async () => {
-      try {
-        const hasLaunch = await AsyncStorage.getItem("hasLaunched");
-        if (hasLaunch === "true") {
-          // Already logged in → skip code screen
-          navigation.replace("Verify");
-        }
-      } catch (e) {
-        console.error("Error checking login:", e);
-      }
-    };
-    checkLaunch();
-  }, []);
 
   const handleGetStarted = async () => {
-    await AsyncStorage.setItem("hasLaunched", "true");
-    await AsyncStorage.setItem("hasLogged", "false");
     navigation.replace("Verify");
   };
 

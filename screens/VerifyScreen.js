@@ -20,7 +20,7 @@ export default function VerifyScreen({ navigation }) {
         const hasLog = await AsyncStorage.getItem("hasLogged");
         if (hasLog === "true") {
           // Already logged in → skip code screen
-          navigation.replace("Database");
+          navigation.replace("Wait");
         } else {
           setLoading(false);
         }
