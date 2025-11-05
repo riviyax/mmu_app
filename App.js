@@ -36,17 +36,18 @@ export default function App() {
     }
   }, []);
 
-  // ✅ Handle applying update
+  // ✅ Handle Update + Clear Storage
   const handleUpdateNow = async () => {
     try {
       await Updates.fetchUpdateAsync();
+      await AsyncStorage.clear(); // ✅ Clear all data after update
       await Updates.reloadAsync();
     } catch (error) {
       console.log('Error updating app:', error);
     }
   };
 
-  // ✅ Load flags & determine initial route
+  // ✅ Initial logic & route selection
   useEffect(() => {
     async function prepare() {
       try {
@@ -56,14 +57,10 @@ export default function App() {
         const hasLogged = await AsyncStorage.getItem('hasLogged');
 
         if (!hasLaunched) {
-          // First time launching the app
-          await AsyncStorage.setItem('hasLaunched', 'true');
           setInitialRoute('Welcome');
         } else if (hasLogged === 'true') {
-          // User already logged in
           setInitialRoute('Wait');
         } else {
-          // Skip WelcomeScreen on subsequent launches
           setInitialRoute('Verify');
         }
       } catch (error) {
@@ -78,17 +75,14 @@ export default function App() {
 
   if (!fontsLoaded || !initialRoute) return null;
 
-  // ✅ Show update screen if OTA update available
+  // ✅ Show Update Screen if OTA Update Found
   if (updateAvailable) {
     return <UpdateAvailableScreen onUpdate={handleUpdateNow} />;
   }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{ headerShown: false }}
-        initialRouteName={initialRoute}
-      >
+      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName={initialRoute}>
         <Stack.Screen name="Welcome" component={WelcomeScreen} />
         <Stack.Screen name="Verify" component={VerifyScreen} />
         <Stack.Screen name="Wait" component={WaitScreen} />

@@ -45,7 +45,7 @@ export default function VerifyScreen({ navigation }) {
     // Check full code
     if (newCode.every((digit) => digit !== "")) {
       const enteredCode = newCode.join("");
-      if (enteredCode === "548") {
+      if (enteredCode === "555") {
         await AsyncStorage.setItem("hasLogged", "true");
         navigation.replace("Wait");
       } else {
